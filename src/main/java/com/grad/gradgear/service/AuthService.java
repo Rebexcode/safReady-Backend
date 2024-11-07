@@ -3,6 +3,7 @@ package com.grad.gradgear.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grad.gradgear.dto.ReqRes;
+import com.grad.gradgear.entity.Form;
 import com.grad.gradgear.entity.OurUsers;
 import com.grad.gradgear.repository.OurUserRepo;
 import org.slf4j.Logger;
@@ -14,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -56,18 +59,14 @@ public class AuthService {
         ReqRes response = new ReqRes();
 
         try {
-            // Authenticate user
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signinRequest.getEmail(), signinRequest.getPassword()));
 
-            // Retrieve user details
             var user = ourUserRepo.findByEmail(signinRequest.getEmail()).orElseThrow(() -> new Exception("User not found."));
             logger.info("USER IS: " + user);
 
-            // Generate tokens
             var jwt = jwtUtils.generateToken(user);
             var refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), user);
 
-            // Populate response
             response.setStatusCode(200);
             response.setToken(jwt);
             response.setRefreshToken(refreshToken);
@@ -75,7 +74,6 @@ public class AuthService {
             response.setMessage("Successfully Signed In");
             response.setOurUsers(user);
 
-            // Return the response object directly
             return response;
         } catch (Exception e) {
             logger.error("Sign-in failed: " + e.getMessage(), e);
@@ -100,5 +98,14 @@ public class AuthService {
             response.setStatusCode(500); // Only if there's an issue
         }
         return response;
+    }
+
+    public List<OurUsers> getAllUsers() {
+        return ourUserRepo.findAll();
+    }
+
+    public OurUsers getUserById(int id) {
+        Optional<OurUsers> user = ourUserRepo.findById(id);
+        return user.orElse(null); // Returns null if user is not found
     }
 }

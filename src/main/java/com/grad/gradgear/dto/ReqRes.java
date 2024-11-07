@@ -3,6 +3,7 @@ package com.grad.gradgear.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.grad.gradgear.entity.Checklist;
 import com.grad.gradgear.entity.OurUsers;
 import lombok.Data;
 
@@ -27,4 +28,8 @@ public class ReqRes {
     private String lastname;
     private String confirmPassword;
     private OurUsers ourUsers;
+    private String title;
+    private String description;
+    private boolean completed;
+    private Checklist checklist;
 }
