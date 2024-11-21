@@ -5,33 +5,35 @@ import com.grad.gradgear.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/auth")
+@PreAuthorize("hasRole('ROLE_Admin')")
+@RequestMapping("/reviews")
 public class ReviewController {
 
     @Autowired
     private ReviewService reviewService;
 
-    @GetMapping("/reviews/{submissionId}")
+    @GetMapping("/{submissionId}")
     public ResponseEntity<Review> getReviewBySubmissionId(@PathVariable Long submissionId) {
         Optional<Review> review = reviewService.getReviewBySubmissionId(submissionId);
         return review.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PostMapping("/reviews/{submissionId}")
+    @PostMapping("/{submissionId}")
     public ResponseEntity<Review> addOrUpdateReview(@PathVariable Long submissionId, @RequestBody Review review) {
         review.setSubmissionId(submissionId);
         Review savedReview = reviewService.addOrUpdateReview(review);
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 
-    @PutMapping("/reviews/{submissionId}")
+    @PutMapping("/{submissionId}")
     public ResponseEntity<Review> updateReview(
             @PathVariable Long submissionId,
             @RequestBody Review updatedReview) {
@@ -50,5 +52,4 @@ public class ReviewController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-
 }

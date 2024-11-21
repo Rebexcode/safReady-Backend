@@ -3,6 +3,8 @@ package com.grad.gradgear.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grad.gradgear.dto.ReqRes;
+import com.grad.gradgear.dto.SigninReqRes;
+import com.grad.gradgear.dto.SignupReqRes;
 import com.grad.gradgear.entity.Form;
 import com.grad.gradgear.entity.OurUsers;
 import com.grad.gradgear.repository.OurUserRepo;
@@ -32,20 +34,27 @@ public class AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    public ReqRes signUp(ReqRes registrationRequest){
+    public ReqRes signUp(SignupReqRes signupReqRes){
         ReqRes resp = new ReqRes();
         try {
             OurUsers ourUsers = new OurUsers();
-            ourUsers.setFirstname(registrationRequest.getFirstname());
-            ourUsers.setLastname(registrationRequest.getLastname());
-            ourUsers.setEmail(registrationRequest.getEmail());
-            ourUsers.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
-            ourUsers.setConfirmPassword(passwordEncoder.encode(registrationRequest.getConfirmPassword()));
-            ourUsers.setRole(registrationRequest.getRole());
+            ourUsers.setFirstname(signupReqRes.getFirstname());
+            ourUsers.setLastname(signupReqRes.getLastname());
+            ourUsers.setEmail(signupReqRes.getEmail());
+            ourUsers.setPassword(passwordEncoder.encode(signupReqRes.getPassword()));
+            ourUsers.setConfirmPassword(passwordEncoder.encode(signupReqRes.getConfirmPassword()));
+            ourUsers.setRole(signupReqRes.getRole());
             OurUsers ourUserResult = ourUserRepo.save(ourUsers);
             if (ourUserResult != null && ourUserResult.getId() > 0) {
+                var jwt = jwtUtils.generateToken(ourUserResult);
+                var refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), ourUserResult);
+
                 resp.setOurUsers(ourUserResult);
-                resp.setMessage("User Saved Successfully");
+                resp.setStatusCode(200);
+                resp.setToken(jwt);
+                resp.setRefreshToken(refreshToken);
+                resp.setExpirationTime("24Hr");
+                resp.setMessage("Successfully Signed In");
                 resp.setStatusCode(200);
             }
         } catch (Exception e) {
@@ -55,13 +64,16 @@ public class AuthService {
         return resp;
     }
 
-    public ReqRes signIn(ReqRes signinRequest) {
+    public ReqRes signIn(SigninReqRes signinReqRes) {
         ReqRes response = new ReqRes();
 
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signinRequest.getEmail(), signinRequest.getPassword()));
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(signinReqRes.getEmail(), signinReqRes.getPassword())
+            );
 
-            var user = ourUserRepo.findByEmail(signinRequest.getEmail()).orElseThrow(() -> new Exception("User not found."));
+            var user = ourUserRepo.findByEmail(signinReqRes.getEmail())
+                    .orElseThrow(() -> new Exception("User not found."));
             logger.info("USER IS: " + user);
 
             var jwt = jwtUtils.generateToken(user);
@@ -72,13 +84,15 @@ public class AuthService {
             response.setRefreshToken(refreshToken);
             response.setExpirationTime("24Hr");
             response.setMessage("Successfully Signed In");
-            response.setOurUsers(user);
+            response.setEmail(user.getEmail());
+            response.setName(user.getFirstname() + " " + user.getLastname());
+            response.setRole(user.getRole());
 
             return response;
         } catch (Exception e) {
             logger.error("Sign-in failed: " + e.getMessage(), e);
             response.setStatusCode(500);
-            response.setError("Sign-in failed. Please check your credentials.");
+            response.setMessage("Sign-in failed. Please check your credentials.");
             return response;
         }
     }

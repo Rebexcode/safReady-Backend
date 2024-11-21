@@ -1,12 +1,16 @@
 package com.grad.gradgear.controller;
 
 import com.grad.gradgear.dto.ReqRes;
+import com.grad.gradgear.dto.SigninReqRes;
+import com.grad.gradgear.dto.SignupReqRes;
 import com.grad.gradgear.entity.Form;
 import com.grad.gradgear.entity.OurUsers;
 import com.grad.gradgear.service.AuthService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +24,12 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ReqRes> signUp(@RequestBody @Validated ReqRes signUpRequest){
-        return ResponseEntity.ok(authService.signUp(signUpRequest));
+    public ResponseEntity<ReqRes> signUp(@RequestBody @Validated SignupReqRes signupReqRes){
+        return ResponseEntity.ok(authService.signUp(signupReqRes));
     }
 
-    @GetMapping("/signup")
+    @PreAuthorize("hasRole('ROLE_Admin')")
+    @GetMapping("/users")
     public ResponseEntity<List<OurUsers>> getAllUsers() {
         List<OurUsers> ourUsers = authService.getAllUsers();
         return new ResponseEntity<>(ourUsers, HttpStatus.OK);
@@ -41,15 +46,13 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<ReqRes> signIn(@RequestBody @Validated ReqRes signInRequest) {
-        ReqRes response = authService.signIn(signInRequest); // Get the response as an object
-        if (response.getStatusCode() == 200) {
-            return ResponseEntity.ok(response);  // Return 200 status with the response object
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);  // Return 500 error with the response object
-        }
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ReqRes> signIn(@RequestBody @Validated SigninReqRes signinReqRes) {
+        ReqRes response = authService.signIn(signinReqRes);
+        return response.getStatusCode() == 200 ?
+                ResponseEntity.ok(response) :
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
-
 
     @PostMapping("/refresh")
     public ResponseEntity<ReqRes> refreshToken(@RequestBody ReqRes refreshTokenRequest){

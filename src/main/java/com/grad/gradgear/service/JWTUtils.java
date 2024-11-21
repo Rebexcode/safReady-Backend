@@ -1,11 +1,14 @@
 package com.grad.gradgear.service;
 
+import com.grad.gradgear.entity.OurUsers;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -15,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class JWTUtils {
@@ -33,7 +37,14 @@ public class JWTUtils {
 
     // Generate token based on user details
     public String generateToken(UserDetails userDetails) {
+        OurUsers ourUser = (OurUsers) userDetails; // Cast to get access to the role field
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", ourUser.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis())) // Token issued time
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // Token expiration time

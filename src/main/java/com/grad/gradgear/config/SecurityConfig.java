@@ -4,6 +4,7 @@ import com.grad.gradgear.service.OurUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -34,16 +35,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(request -> request.requestMatchers("/auth/**").permitAll()
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/form-reviews/**").hasAnyAuthority("Admin")
                         .requestMatchers("/auth/checklists/**").permitAll()
-                        .requestMatchers("/auth/reviews/**").permitAll()
-                        .requestMatchers("/auth/submissions/**").permitAll()
-                        .requestMatchers("/auth/form/**").permitAll()
-                        .requestMatchers("/auth/form-reviews/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN")
-                        .requestMatchers("/user/**").hasAnyAuthority("USER")
-                        .requestMatchers("/adminuser/**").hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/submissions").hasRole("Admin")
+                        .requestMatchers(HttpMethod.POST, "/submissions").hasRole("User")
+                        .requestMatchers(HttpMethod.GET, "/submissions/{id}").hasRole("Admin")
+                        .requestMatchers("/reviews/**").hasAnyAuthority("Admin")
+                        .requestMatchers(HttpMethod.GET, "/form").hasRole("Admin")
+                        .requestMatchers(HttpMethod.POST, "/form").hasRole("User")
+                        .requestMatchers(HttpMethod.GET, "/form/{id}").hasRole("Admin")
                         .requestMatchers("/auth/checklists/{id}").hasAnyAuthority("USER")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

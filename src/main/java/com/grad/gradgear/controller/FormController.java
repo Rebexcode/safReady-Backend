@@ -7,31 +7,35 @@ import com.grad.gradgear.service.SubmissionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/form")
 public class FormController {
 
     @Autowired
     private FormService formService;
 
-    @PostMapping("/form")
+    @PostMapping("")
+    @PreAuthorize("hasRole('ROLE_User')")
     public ResponseEntity<Form> addForm(@RequestBody Form form) {
         Form newForm = formService.addForm(form);
         return new ResponseEntity<>(newForm, HttpStatus.CREATED);
     }
 
-    @GetMapping("/form")
+    @PreAuthorize("hasRole('ROLE_Admin')")
+    @GetMapping("")
     public ResponseEntity<List<Form>> getAllForms() {
         List<Form> form = formService.getAllForms();
         return new ResponseEntity<>(form, HttpStatus.OK);
     }
 
-    @GetMapping("/form/{id}")
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_Admin')")
     public ResponseEntity<Form> getFormById(@PathVariable Long id) {
         Optional<Form> form = formService.getFormById(id);
         return form.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
