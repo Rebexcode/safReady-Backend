@@ -27,8 +27,9 @@ public class FormController {
         return new ResponseEntity<>(newForm, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasRole('ROLE_Admin')")
+
     @GetMapping("")
+    @PreAuthorize("hasAnyRole('ROLE_Admin', 'ROLE_User')")
     public ResponseEntity<List<Form>> getAllForms() {
         List<Form> form = formService.getAllForms();
         return new ResponseEntity<>(form, HttpStatus.OK);

@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@PreAuthorize("hasRole('ROLE_Admin')")
 @RequestMapping("/reviews")
 public class ReviewController {
 
     @Autowired
     private ReviewService reviewService;
 
+    @PreAuthorize("hasRole('ROLE_User')")
     @GetMapping("/{submissionId}")
     public ResponseEntity<Review> getReviewBySubmissionId(@PathVariable Long submissionId) {
         Optional<Review> review = reviewService.getReviewBySubmissionId(submissionId);
@@ -26,6 +26,8 @@ public class ReviewController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+
+    @PreAuthorize("hasRole('ROLE_Admin')")
     @PostMapping("/{submissionId}")
     public ResponseEntity<Review> addOrUpdateReview(@PathVariable Long submissionId, @RequestBody Review review) {
         review.setSubmissionId(submissionId);
@@ -33,6 +35,7 @@ public class ReviewController {
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('ROLE_Admin')")
     @PutMapping("/{submissionId}")
     public ResponseEntity<Review> updateReview(
             @PathVariable Long submissionId,

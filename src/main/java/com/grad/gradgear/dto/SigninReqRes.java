@@ -1,5 +1,6 @@
 package com.grad.gradgear.dto;
 
+import com.grad.gradgear.entity.OurUsers;
 import lombok.Data;
 
 @Data

@@ -16,19 +16,15 @@ public class FormReviewsService {
         return formreviewsRepo.findByFormId(formId);
     }
 
-    // Add or update a review
     public FormReviews addOrUpdateContactReview(FormReviews formReviews) {
-        // Check if a review exists for the given submission ID
         Optional<FormReviews> existingReview = formreviewsRepo.findByFormId(formReviews.getFormId());
 
         if (existingReview.isPresent()) {
-            // If a review exists, update it
             FormReviews reviewToUpdate = existingReview.get();
             reviewToUpdate.setFeedback(formReviews.getFeedback());
             reviewToUpdate.setStatus(formReviews.getStatus());
             return formreviewsRepo.save(reviewToUpdate);
         } else {
-            // If no review exists, create a new one
             return formreviewsRepo.save(formReviews);
         }
     }
